@@ -4,6 +4,8 @@ Milestone 3 of 7 is complete: vehicles, VIN decode, check-in photos/checklist, r
 
 ## Open it on this computer
 
+Production: **https://kars-recon.vercel.app**. Open this address on shop computers or phones; the local development server does not need to be running. Vercel project `kars-recon` belongs to `nelsonandelsons-projects` and connects to the existing Supabase project. The release uses source commit `faa3bf7` and deployment `dpl_2XTQu5f7tzynzTQQ1nXuhJNavLKo`. Production configuration contains only the Supabase URL and publishable key. No service-role key is used.
+
 While the development server is running, visit http://127.0.0.1:3000.
 
 To restart it in PowerShell:
@@ -105,7 +107,7 @@ Weekly pay runs Monday through Sunday in America/New_York. Each completed job us
 
 After payment and after Sunday ends, a selected owner can review and lock the entire week. This records payment; it does not transfer money. A locked week stores its rows, rates and amounts in an immutable activity-log event. Later rate changes cannot recalculate it, paid jobs cannot be edited, and new completions cannot be backdated into that week. Export full week downloads CSV.
 
-`TEST-M3-1104` contains synthetic verification jobs. The locked week of October 26, 2026 contains only its two test jobs ($50 repair plus $10 comeback override). These are test records, not actual wages or payments. Demo Alex's current rate remains the seeded $27/hour.
+`TEST-M3-1104` contains synthetic verification jobs and is archived as Sold. The locked week of October 26, 2026 contains only its two test jobs ($50 repair plus $10 comeback override). These are test records, not actual wages or payments. Demo Alex's current rate remains the seeded $27/hour.
 
 ## Migrations, seed and generated types
 
@@ -135,6 +137,8 @@ node --env-file=.env.local scripts/check-live.mjs
 ```
 
 ## Verification completed
+
+- Production verified November 4, 2026: public HTTPS board, jobs, pay, rates and CSV export return HTTP 200 without sign-in. A production browser save persisted after reload; its temporary blocker was cleared and the test vehicle archived. The existing real vehicle was not modified. Vercel reported no runtime errors following the smoke checks. The app is hosted independently of the development computer.
 
 - 90 passing Vitest tests: money/pay arithmetic, date/VIN validation, PostgreSQL constraints, seed, RLS, transactional workflows, stale edits, QC eligibility/invalidation, photo ownership/retention, job completion, comeback attribution, immutable paid snapshots and CSV safety.
 - Browser jobs/pay flow verified: create/start/cancel/reopen/complete, linked comeback, reasoned override, retroactive rate recalculation, week locking, unchanged locked amounts after another rate change, and CSV download. Mobile weekly pay was checked at 390px.
