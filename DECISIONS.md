@@ -5,7 +5,8 @@ The original SPEC.md is preserved verbatim. These later instructions take preced
 - No sign-in. This is a shared shop application. Everyone using it may see costs and all tech pay. Profile roles are descriptive; they do not authenticate or authorize a visitor.
 - Keep the exact original tables and columns for now. No new cost tables, pay snapshot columns, QC columns, or approval columns.
 - New Supabase project `kars-recon` in `nelsonbaguma`, US East (Ohio). Existing projects are untouched.
-- Milestone 1 was completed and milestone 2 approved. Complete milestone 2, test, commit, and stop for review before milestone 3.
+- Milestones 1 and 2 were completed. Milestone 3 was approved, followed by an explicit request to deploy the completed app to production.
+- Store locked pay snapshots and comeback overrides as structured immutable events in the existing activity log. No table or column additions.
 - Record QC sign-offs in the existing activity log, using a selected team member's self-reported name. No QC column is added.
 
 ## Access model
@@ -20,11 +21,11 @@ Check-in uses a fixed four-item checklist (fluids, tires, warning lights, body/i
 
 ## Deferred schema gaps
 
-The unchanged schema cannot directly store immutable pay amount/rate snapshots, an owner comeback-pay override, or a part approval state. These features require a decision at their milestones. Do not silently claim they are implemented or hide financial snapshots inside unrelated notes. QC is separately resolved by the approved activity-log approach above.
+Pay snapshots and comeback overrides are resolved by the explicitly approved activity-log approach. The log is append-only; locked snapshots retain the complete pay rows and effective rates. Selected-owner attribution remains self-reported. Week locks apply only to completed weeks, require a fresh preview, block paid-job changes and backdated new completions, and do not send money. Part approval state still requires a decision at its milestone.
 
 `stage_history`, `sublets`, and `activity_log` did not specify IDs. No surrogate IDs were added. Row targeting for editable sublets needs discussion before that feature ships. A single check-in row uses vehicle_id as its key. Settings is limited to one row by a constant-expression unique index.
 
-Core charges and refund amounts are interpreted as line totals; qty multiplies only unit_cost_cents. Hours are numeric(6,2), cents are integers. Per-job pay rounds half-up to the nearest cent using integer arithmetic. Pay dates use the shop's America/New_York calendar. UI/pay workflows are deferred to milestone 3.
+Core charges and refund amounts are interpreted as line totals; qty multiplies only unit_cost_cents. Hours are numeric(6,2), cents are integers. Per-job pay rounds half-up to the nearest cent using integer arithmetic. Pay dates use the shop's America/New_York calendar. Milestone 3 implements jobs and weekly pay, including zero-pay comebacks, reasoned overrides and CSV exports.
 
 ## Verification scope
 

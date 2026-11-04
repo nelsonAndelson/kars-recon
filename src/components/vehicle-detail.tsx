@@ -6,7 +6,6 @@ import {
   ClipboardCheck,
   Clock3,
   Flag,
-  CarFront,
   ImageIcon,
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -24,6 +23,9 @@ import {
 } from "@/lib/vehicles";
 import { formatMoney } from "@/lib/money";
 import type { VehicleData } from "@/lib/recon-data";
+import type { WorkData } from "@/lib/jobs";
+import { VehicleJobs } from "./vehicle-jobs";
+import { shopDate } from "@/lib/vehicles";
 function stamp(date: string) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
@@ -34,7 +36,13 @@ function stamp(date: string) {
     minute: "2-digit",
   }).format(new Date(date));
 }
-export function VehicleDetail({ data }: { data: VehicleData }) {
+export function VehicleDetail({
+  data,
+  work,
+}: {
+  data: VehicleData;
+  work: WorkData;
+}) {
   const [tab, setTab] = useState("jobs");
   const car = data.car!;
   const age = stageAge(car, data.history, data.now),
@@ -70,11 +78,15 @@ export function VehicleDetail({ data }: { data: VehicleData }) {
                 ? "Vehicle added"
                 : event.action === "vehicles:update"
                   ? "Vehicle updated"
-                  : event.action.replace(":", " · "),
+                  : event.action.replaceAll("_", " ").replace(":", " · "),
         note:
           typeof event.blocker === "string"
             ? `Blocker: ${event.blocker.replaceAll("_", " ")}${event.note ? ` — ${event.note}` : ""}`
-            : "Activity log",
+            : typeof event.title === "string"
+              ? `${event.title}${event.note ? ` — ${event.note}` : ""}`
+              : typeof event.reason === "string"
+                ? event.reason
+                : "Activity log",
       };
     }),
   ].sort((a, b) => b.when.localeCompare(a.when));
@@ -236,35 +248,11 @@ export function VehicleDetail({ data }: { data: VehicleData }) {
           tabIndex={0}
         >
           {tab === "jobs" && (
-            <>
-              <div className="panel-intro">
-                <h2>Jobs on this car</h2>
-                <p>Job creation and tech updates arrive in milestone 3.</p>
-              </div>
-              {data.jobs.length ? (
-                <div className="record-list">
-                  {data.jobs.map((job) => (
-                    <article key={job.id}>
-                      <div>
-                        <h3>{job.title}</h3>
-                        <p>
-                          {person(job.tech_id)} · {job.book_hours.toFixed(2)}{" "}
-                          book hours{job.is_comeback ? " · Comeback" : ""}
-                        </p>
-                      </div>
-                      <span className="record-status">
-                        {job.status.replaceAll("_", " ")}
-                      </span>
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <div className="detail-empty">
-                  <CarFront />
-                  <p>No jobs recorded yet.</p>
-                </div>
-              )}
-            </>
+            <VehicleJobs
+              data={work}
+              vehicleId={car.id}
+              today={shopDate(new Date(data.now))}
+            />
           )}
           {tab === "parts" && (
             <>

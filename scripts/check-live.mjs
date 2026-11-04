@@ -13,7 +13,13 @@ assert.equal(
 );
 const rates = await db.from("tech_pay_rates").select("*");
 assert.equal(rates.error, null);
-assert.equal(rates.data.length, 6);
+assert.ok(rates.data.length >= 6);
+const work = await db.rpc("work_data");
+assert.equal(work.error, null);
+assert.ok(Array.isArray(work.data.jobs));
+const pay = await db.rpc("pay_week_report", { start_date: "2026-10-26" });
+assert.equal(pay.error, null);
+assert.ok(Array.isArray(pay.data.rows));
 // A no-op UPDATE against a nonexistent stock verifies write denial without touching records.
 const denied = await db
   .from("vehicles")
@@ -22,5 +28,5 @@ const denied = await db
 assert.ok(denied.error, "Anonymous UPDATE must fail");
 assert.equal(denied.error.code, "42501");
 console.log(
-  "Live Supabase passed: 12 demo vehicles, 6 rate records, anonymous writes denied.",
+  "Live Supabase passed: demo inventory, rate history, jobs, pay report and direct-write denial.",
 );

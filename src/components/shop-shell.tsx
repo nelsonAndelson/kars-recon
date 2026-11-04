@@ -10,6 +10,7 @@ import {
   Package,
   ChartNoAxesCombined,
   ChevronRight,
+  Banknote,
 } from "lucide-react";
 import type { Tables } from "@/types/database";
 const ActorContext = createContext({
@@ -28,7 +29,7 @@ export function ShopShell({
   children: React.ReactNode;
   profiles: Tables<"profiles">[];
   title: string;
-  active?: "board" | "new";
+  active?: "board" | "new" | "jobs" | "pay";
 }) {
   const [actor, setActorState] = useState("");
   useEffect(() => {
@@ -75,13 +76,20 @@ export function ShopShell({
               <Settings2 size={20} />
               Setup review
             </Link>
+            <Link
+              href="/jobs"
+              className={active === "jobs" ? "nav-active" : ""}
+            >
+              <Wrench size={20} />
+              My jobs
+            </Link>
+            <Link href="/pay" className={active === "pay" ? "nav-active" : ""}>
+              <Banknote size={20} />
+              Weekly pay
+            </Link>
           </nav>
           <div className="nav-label upcoming-label">NEXT MILESTONES</div>
           <div className="upcoming-nav">
-            <div>
-              <Wrench size={19} />
-              Jobs & pay
-            </div>
             <div>
               <Package size={19} />
               Parts lifecycle
@@ -127,11 +135,31 @@ export function ShopShell({
               </select>
             </label>
           </header>
+          <nav className="mobile-work-nav" aria-label="Shop navigation">
+            <Link
+              href="/"
+              aria-current={active === "board" ? "page" : undefined}
+            >
+              Board
+            </Link>
+            <Link
+              href="/jobs"
+              aria-current={active === "jobs" ? "page" : undefined}
+            >
+              My jobs
+            </Link>
+            <Link
+              href="/pay"
+              aria-current={active === "pay" ? "page" : undefined}
+            >
+              Weekly pay
+            </Link>
+          </nav>
           <main id="main" className="recon-main">
             {children}
             <footer className="main-footer">
               <span>KARS RECON / Internal inventory only</span>
-              <span>Milestone 2 · Vehicles & board</span>
+              <span>Milestone 3 · Jobs & pay</span>
             </footer>
           </main>
         </div>

@@ -1,0 +1,795 @@
+.mobile-work-nav {
+  display: none;
+}
+.plain-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.notice {
+  font-size: 14px;
+  line-height: 1.65;
+  background: #f0f4e9;
+  border: 1px solid #dfe7d4;
+  color: #5b6c4b;
+  padding: 15px 18px;
+  border-radius: 9px;
+  margin: 16px 0;
+}
+.work-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
+  margin: 24px 0;
+  overflow: hidden;
+}
+.work-stats > div {
+  padding: 25px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  border-right: 1px solid var(--line);
+}
+.work-stats > div:last-child {
+  border: 0;
+}
+.work-stats svg {
+  color: #879b74;
+  width: 22px;
+}
+.work-stats strong {
+  font-size: 29px;
+  font-weight: 650;
+  letter-spacing: -0.6px;
+  overflow-wrap: anywhere;
+}
+.work-stats span {
+  grid-column: 1/-1;
+  font-size: 12px;
+  color: #718262;
+}
+.work-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 25px;
+}
+.work-toolbar .board-search {
+  min-width: 240px;
+}
+.compact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #637555;
+}
+.compact-field select,
+.compact-field input {
+  min-height: 48px;
+  max-width: 100%;
+  border: 1px solid #d5dfca;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #3e5031;
+  font-size: 15px;
+  font-weight: 400;
+}
+.results-caption {
+  font-size: 12px;
+  color: #7b886f;
+  margin: 22px 0 14px;
+}
+.jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.job-card {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #dce3d3;
+  border-radius: 11px;
+  min-width: 0;
+}
+.job-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.job-card h3 {
+  font-size: 19px;
+  line-height: 1.45;
+  font-weight: 650;
+  letter-spacing: -0.3px;
+  overflow-wrap: anywhere;
+}
+.job-stock {
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+  color: #9a522f;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin-bottom: 6px;
+}
+.job-card-top p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #718362;
+  margin-top: 8px;
+}
+.job-card-top p span {
+  margin: 0 4px;
+}
+.job-status {
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-size: 11px;
+  text-transform: capitalize;
+  white-space: nowrap;
+  background: #f1f4ea;
+  color: #728263;
+}
+.status-in_progress {
+  background: #fff0dc;
+  color: #a86a24;
+}
+.status-done {
+  background: #e6f0dc;
+  color: #54763b;
+}
+.status-cancelled {
+  background: #f0f0ed;
+  color: #83867d;
+}
+.status-needs_approval {
+  background: #fce8df;
+  color: #a74823;
+}
+.job-note {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #6a7b5c;
+  white-space: pre-wrap;
+  margin: 15px 0;
+  overflow-wrap: anywhere;
+}
+.job-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.job-actions button {
+  font-size: 12px;
+  min-height: 48px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.job-actions svg {
+  width: 16px;
+  height: 16px;
+}
+.text-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 48px;
+  border: 0;
+  background: none;
+  padding: 10px 4px;
+  font-size: 12px;
+  color: #7a614b;
+  cursor: pointer;
+}
+.text-action:hover {
+  text-decoration: underline;
+}
+.text-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.comeback-card {
+  border-top: 3px solid #db9c65;
+}
+.comeback-note {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  background: #fcf1e5;
+  color: #9c6b35;
+  border-radius: 7px;
+  padding: 13px;
+  margin-top: 17px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.comeback-note svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.comeback-note p {
+  font-size: 11px;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.job-date {
+  font-size: 11px;
+  color: #8a9680;
+  margin-top: 12px;
+}
+.job-blocker {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #a37535;
+  margin-top: 16px;
+  overflow-wrap: anywhere;
+}
+.job-blocker svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.locked-job {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #59794c;
+  background: #f1f6e9;
+  border-radius: 7px;
+  padding: 12px;
+  margin-top: 17px;
+}
+.parts-question {
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 25px;
+}
+.vehicle-jobs-heading {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.vehicle-jobs-heading button {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+.vehicle-job-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.pay-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border: 1px solid #e4d2ac;
+  background: #fbf4e5;
+  color: #967337;
+  border-radius: 11px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+}
+.pay-state > svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.pay-state strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.pay-state p {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 5px;
+}
+.pay-state.is-locked {
+  background: #edf4e6;
+  border-color: #cbdcbb;
+  color: #53723e;
+}
+.pay-week-toolbar {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.week-picker {
+  display: flex;
+  gap: 9px;
+  align-items: flex-end;
+}
+.pay-week-toolbar button,
+.pay-week-toolbar a {
+  font-size: 13px;
+}
+.pay-tech-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+}
+.pay-tech-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.pay-tech-heading {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 24px;
+}
+.tech-avatar {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: #edf2e3;
+  color: #728755;
+  border: 1px solid #dfe7d1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 650;
+}
+.pay-tech-heading h2 {
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.4px;
+}
+.pay-tech-heading p {
+  font-size: 12px;
+  color: #7e8c71;
+  margin-top: 5px;
+}
+.pay-tech-heading > strong {
+  margin-left: auto;
+  font-size: 25px;
+  font-weight: 650;
+  color: #415b30;
+  letter-spacing: -0.6px;
+}
+.comeback-summary {
+  margin: 0 24px 20px;
+  padding: 13px 16px;
+  background: #faf6ef;
+  border-radius: 7px;
+  color: #93734e;
+  font-size: 12px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.comeback-summary > span {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-weight: 600;
+}
+.comeback-summary p {
+  font-size: 11px;
+}
+.pay-lines {
+  padding: 0 24px;
+}
+.pay-lines article {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-top: 1px solid #e7ebdf;
+  padding: 20px 0;
+}
+.pay-lines a {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+  display: inline-block;
+  overflow-wrap: anywhere;
+}
+.pay-lines a:hover {
+  color: var(--orange);
+}
+.pay-lines p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #7b8a6e;
+  margin-top: 6px;
+}
+.pay-lines strong {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-top: 3px;
+}
+.pay-no-jobs {
+  padding: 0 24px 24px;
+  font-size: 13px;
+  color: #849177;
+}
+.pay-lock-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  margin-top: 25px;
+  padding: 25px;
+  border: 1px solid #dce5cd;
+  background: #f0f4e8;
+  border-radius: 12px;
+}
+.pay-lock-panel h2 {
+  font-size: 20px;
+  font-weight: 650;
+}
+.pay-lock-panel p {
+  font-size: 13px;
+  color: #718262;
+  line-height: 1.7;
+  margin-top: 9px;
+  max-width: 650px;
+}
+.pay-lock-panel button {
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-size: 13px;
+}
+.lock-total {
+  font-size: 40px;
+  font-weight: 650;
+  letter-spacing: -1px;
+  color: #506e3a;
+  margin: 20px 0;
+}
+.lock-total span {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+  margin-top: 8px;
+}
+.rate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+.rate-card {
+  padding: 25px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.rate-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+.rate-heading h2 {
+  font-size: 19px;
+  font-weight: 650;
+}
+.rate-heading p {
+  font-size: 12px;
+  color: #859276;
+  margin-top: 7px;
+}
+.rate-heading > strong {
+  font-size: 22px;
+  color: #52733a;
+  font-weight: 650;
+  text-align: right;
+}
+.rate-heading small {
+  display: block;
+  font-size: 10px;
+  color: #8e9b80;
+  font-weight: 400;
+  margin-top: 5px;
+}
+.rate-card button {
+  width: 100%;
+  font-size: 13px;
+}
+.rate-history {
+  list-style: none;
+  padding: 0;
+  margin: 25px 0 0;
+}
+.rate-history li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid #e4eadb;
+  padding: 18px 0;
+  font-size: 14px;
+}
+.rate-history span {
+  display: block;
+  font-size: 12px;
+  color: #7e8d6f;
+  margin-top: 5px;
+}
+.rate-history small {
+  font-size: 10px;
+  color: #89987a;
+  padding-top: 4px;
+}
+@media (max-width: 1100px) {
+  .jobs-grid {
+    grid-template-columns: 1fr;
+  }
+  .work-stats > div {
+    padding: 20px;
+  }
+  .work-stats strong {
+    font-size: 25px;
+  }
+  .pay-lock-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pay-tech-heading > strong {
+    font-size: 23px;
+  }
+  .pay-week-toolbar {
+    gap: 12px;
+  }
+}
+@media (max-width: 760px) {
+  .mobile-work-nav {
+    display: flex;
+    border-bottom: 1px solid var(--line);
+    padding: 0 20px;
+    background: #fff;
+    gap: 8px;
+  }
+  .mobile-work-nav a {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    font-size: 13px;
+    color: #748366;
+    border-bottom: 3px solid transparent;
+  }
+  .mobile-work-nav a[aria-current="page"] {
+    color: #b74e21;
+    border-color: var(--orange);
+    font-weight: 650;
+  }
+  .work-stats > div {
+    padding: 17px 12px;
+    gap: 8px;
+  }
+  .work-stats strong {
+    font-size: 22px;
+  }
+  .work-stats svg {
+    width: 18px;
+  }
+  .work-stats span {
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  .work-toolbar .board-search {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+  .work-toolbar > .compact-field {
+    flex: 1;
+    min-width: 0;
+  }
+  .compact-field select,
+  .compact-field input {
+    font-size: 16px;
+    min-width: 0;
+    width: 100%;
+  }
+  .job-card {
+    padding: 20px;
+  }
+  .job-card-top {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .job-card h3 {
+    font-size: 19px;
+  }
+  .job-card-top p {
+    font-size: 13px;
+  }
+  .job-stock {
+    min-height: 48px;
+    font-size: 12px;
+  }
+  .job-actions button {
+    flex: 1;
+    min-width: 90px;
+    font-size: 13px;
+  }
+  .text-action {
+    font-size: 13px;
+  }
+  .comeback-note {
+    font-size: 13px;
+  }
+  .comeback-note p {
+    font-size: 12px;
+  }
+  .notice {
+    font-size: 13px;
+    padding: 14px;
+  }
+  .vehicle-jobs-heading {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .vehicle-jobs-heading .panel-intro h2 {
+    font-size: 18px;
+  }
+  .vehicle-jobs-heading button {
+    font-size: 12px;
+    padding: 0 10px;
+  }
+  .vehicle-jobs-heading svg {
+    width: 15px;
+  }
+  .pay-state {
+    padding: 16px;
+  }
+  .pay-state p {
+    font-size: 12px;
+  }
+  .pay-week-toolbar .week-picker {
+    width: 100%;
+  }
+  .week-picker .compact-field {
+    flex: 1;
+  }
+  .pay-week-toolbar > .compact-field {
+    width: 100%;
+  }
+  .pay-week-toolbar > button,
+  .pay-week-toolbar > a {
+    flex: 1;
+  }
+  .pay-tech-heading {
+    padding: 20px 17px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .pay-tech-heading h2 {
+    font-size: 18px;
+  }
+  .pay-tech-heading p {
+    font-size: 11px;
+  }
+  .pay-tech-heading > strong {
+    font-size: 22px;
+  }
+  .tech-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 10px;
+  }
+  .comeback-summary {
+    margin: 0 17px 17px;
+    padding: 13px;
+    gap: 8px;
+  }
+  .comeback-summary > span {
+    width: 100%;
+    font-size: 12px;
+  }
+  .comeback-summary p {
+    width: 100%;
+    font-size: 12px;
+  }
+  .pay-lines {
+    padding: 0 17px;
+  }
+  .pay-lines article {
+    gap: 12px;
+  }
+  .pay-lines a {
+    font-size: 13px;
+    min-height: 30px;
+  }
+  .pay-lines p {
+    font-size: 11px;
+  }
+  .pay-lines strong {
+    font-size: 14px;
+  }
+  .pay-lock-panel {
+    padding: 20px;
+    gap: 20px;
+  }
+  .pay-lock-panel button {
+    width: 100%;
+  }
+  .rate-grid {
+    grid-template-columns: 1fr;
+  }
+  .rate-card {
+    padding: 22px;
+  }
+  .rate-history li {
+    font-size: 15px;
+  }
+  .rate-history small {
+    font-size: 11px;
+  }
+}
+@media (max-width: 430px) {
+  .work-stats {
+    grid-template-columns: 1fr;
+  }
+  .work-stats > div {
+    display: flex;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    gap: 12px;
+    padding: 17px;
+  }
+  .work-stats strong {
+    font-size: 25px;
+    min-width: 75px;
+  }
+  .work-stats span {
+    margin-left: auto;
+    font-size: 12px;
+    text-align: right;
+  }
+  .work-stats > div:last-child {
+    border: 0;
+  }
+  .pay-tech-heading > strong {
+    margin-left: 46px;
+    width: 100%;
+    font-size: 27px;
+  }
+  .job-actions button {
+    font-size: 12px;
+  }
+  .job-card {
+    padding: 18px;
+  }
+  .vehicle-jobs-heading {
+    flex-direction: column;
+  }
+  .vehicle-jobs-heading button {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+  .pay-lines article {
+    flex-wrap: wrap;
+  }
+  .pay-lines strong {
+    width: 100%;
+    text-align: right;
+  }
+}

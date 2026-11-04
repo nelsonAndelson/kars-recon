@@ -1,6 +1,6 @@
 # Kars Recon
 
-Milestone 2 of 7 is complete: vehicles, VIN decode, check-in photos/checklist, responsive recon board, stage history, blockers and QC sign-offs. The original brief is in `SPEC.md`; your subsequent choices are in `DECISIONS.md`. No sign-in is required.
+Milestone 3 of 7 is complete: vehicles, VIN decode, check-in photos/checklist, responsive recon board, stage history, blockers, QC sign-offs, jobs, weekly pay, effective rates and immutable paid records. The original brief is in `SPEC.md`; your subsequent choices are in `DECISIONS.md`. No sign-in is required.
 
 ## Open it on this computer
 
@@ -13,7 +13,7 @@ Set-Location 'C:\Users\Admin\Documents\Codex\2026-11-03\bu\outputs\kars-recon'
 .\Start-KarsRecon.ps1
 ```
 
-The launcher uses Node already installed on this computer, including the bundled Codex runtime when needed. It listens only on this computer. Keep the terminal open. Vercel deployment and installation on shop devices have not been performed.
+The launcher uses Node already installed on this computer, including the bundled Codex runtime when needed. It listens only on this computer. Keep the terminal open for local development. The production deployment runs independently of this computer.
 
 ## What to click for milestone 2
 
@@ -95,11 +95,21 @@ Do not commit `.env.local`, passwords, or service-role keys. **Push after every 
 - Pay rates are append-only. Historical rates cannot be updated or deleted.
 - Cents are integers. Hours are `numeric(6,2)`. Unit tests use integer arithmetic, including rounding per job and zero-pay comebacks.
 
-Immutable paid snapshots, comeback-pay overrides, structured part approvals and configurable checklist definitions remain open decisions. Cost totals, budget bars and approval blocking arrive in milestone 5; cards currently show the budget only. Jobs and parts tabs currently show existing records without editing.
+Paid snapshots and comeback-pay overrides use the existing activity log, as explicitly approved. Structured part approvals and configurable checklist definitions remain open decisions. Cost totals, budget bars and approval blocking arrive in milestone 5; cards currently show the budget only. Parts lifecycle editing arrives in milestone 4.
+
+## Jobs and weekly pay
+
+Create and assign jobs from My jobs or a vehicle's Jobs tab. Start, complete, cancel or reopen unpaid work. Completion requires an explicit used/unused disposition for outstanding linked parts. Need part records a request and flags the vehicle; ordering and return workflows are the next milestone.
+
+Weekly pay runs Monday through Sunday in America/New_York. Each completed job uses the rate effective on its completion date. Add effective rates from Weekly pay → Manage rates. Comebacks reference completed work on the same vehicle, default to zero pay, and count against the original technician. A selected owner may record a reasoned total-pay override.
+
+After payment and after Sunday ends, a selected owner can review and lock the entire week. This records payment; it does not transfer money. A locked week stores its rows, rates and amounts in an immutable activity-log event. Later rate changes cannot recalculate it, paid jobs cannot be edited, and new completions cannot be backdated into that week. Export full week downloads CSV.
+
+`TEST-M3-1104` contains synthetic verification jobs. The locked week of October 26, 2026 contains only its two test jobs ($50 repair plus $10 comeback override). These are test records, not actual wages or payments. Demo Alex's current rate remains the seeded $27/hour.
 
 ## Migrations, seed and generated types
 
-Migration filenames match the versions applied to the hosted project: `20261104043850_initial_recon_schema.sql`, `20261104051727_vehicle_workflows.sql`, and `20261104052816_checkin_identity.sql`. No original table or column was added or removed. `src/types/database.ts` was generated from the live schema using Supabase.
+Migration filenames match the versions applied to the hosted project: `20261104043850_initial_recon_schema.sql`, `20261104051727_vehicle_workflows.sql`, `20261104052816_checkin_identity.sql`, and `20261104060707_jobs_and_pay.sql`. No original table or column was added or removed. `src/types/database.ts` was generated from the live schema using Supabase.
 
 For an isolated local Supabase stack (Docker required):
 
@@ -126,7 +136,8 @@ node --env-file=.env.local scripts/check-live.mjs
 
 ## Verification completed
 
-- 60 passing Vitest tests: money/pay arithmetic, date/VIN validation, PostgreSQL constraints, seed, RLS, transactional workflows, stale stage moves, QC eligibility/invalidation and photo ownership/retention.
+- 90 passing Vitest tests: money/pay arithmetic, date/VIN validation, PostgreSQL constraints, seed, RLS, transactional workflows, stale edits, QC eligibility/invalidation, photo ownership/retention, job completion, comeback attribution, immutable paid snapshots and CSV safety.
+- Browser jobs/pay flow verified: create/start/cancel/reopen/complete, linked comeback, reasoned override, retroactive rate recalculation, week locking, unchanged locked amounts after another rate change, and CSV download. Mobile weekly pay was checked at 390px.
 - TypeScript strict check and Next.js production build passed.
 - Live browser → server action → Supabase: VIN decode, create, check-in with compressed photo, blocker set/clear, rejected Frontline without QC, QC sign-off, Frontline and Sold moves verified. Saved check-in persisted after reopening.
 - Browser: empty-filter recovery, desktop list view and keyboard navigation between detail tabs verified.
@@ -137,6 +148,6 @@ node --env-file=.env.local scripts/check-live.mjs
 
 ## Next milestone
 
-After your OK: milestone 3, Jobs + pay. Immutable locked pay and comeback-pay overrides must be resolved within your exact-schema constraint before those workflows ship. No milestone 3 implementation has started.
+Milestone 4: parts ordering, receipts, returns and core tracking. Production deployment of the completed milestones was explicitly requested; remaining milestones are not represented as complete.
 
 Official references used: [Next.js App Router](https://nextjs.org/docs/app/getting-started/installation), [Supabase database security](https://supabase.com/docs/guides/database/postgres/row-level-security), [NHTSA vPIC](https://vpic.nhtsa.dot.gov/api/), [shadcn/ui](https://ui.shadcn.com/docs/components/radix/button).
