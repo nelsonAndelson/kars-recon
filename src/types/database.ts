@@ -515,7 +515,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      vehicle_command: {
+        Args: { command: string; payload: Json }
+        Returns: string
+      }
     }
     Enums: {
       job_category:
