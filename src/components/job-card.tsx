@@ -154,7 +154,7 @@ export function JobCard({
         <div className="job-actions">
           {active && ["pending", "approved"].includes(job.status) && (
             <Button
-              disabled={pending}
+              disabled={pending || !job.tech_id}
               onClick={() => run(() => command("start"), "Job started.")}
             >
               <Play />
@@ -163,7 +163,10 @@ export function JobCard({
           )}
           {active &&
             ["pending", "approved", "in_progress"].includes(job.status) && (
-              <Button disabled={pending} onClick={() => openMode("done")}>
+              <Button
+                disabled={pending || !job.tech_id}
+                onClick={() => openMode("done")}
+              >
                 <Check />
                 Done
               </Button>
@@ -239,6 +242,11 @@ export function JobCard({
           <RotateCcw size={16} />
           Record comeback
         </button>
+      )}
+      {!job.tech_id && open && (
+        <p className="job-note">
+          An admin needs to assign a technician before this job can start.
+        </p>
       )}
       {job.completed_at && (
         <p className="job-date">
