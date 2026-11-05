@@ -519,11 +519,16 @@ export type Database = {
         Args: { command: string; payload: Json };
         Returns: string;
       };
+      part_command: {
+        Args: { command: string; payload: Json };
+        Returns: string;
+      };
       pay_command: {
         Args: { command: string; payload: Json };
         Returns: string;
       };
       pay_week_report: { Args: { start_date: string }; Returns: Json };
+      team_command: { Args: { payload: Json }; Returns: string };
       vehicle_command: {
         Args: { command: string; payload: Json };
         Returns: string;

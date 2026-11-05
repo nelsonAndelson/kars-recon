@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./recon.css";
 import "./work.css";
+import "./shop.css";
 export const metadata: Metadata = {
   title: "Kars Recon · Shop workspace",
   description:

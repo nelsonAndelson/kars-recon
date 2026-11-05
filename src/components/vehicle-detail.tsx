@@ -92,7 +92,7 @@ export function VehicleDetail({
   ].sort((a, b) => b.when.localeCompare(a.when));
   return (
     <>
-      <Link href="/" className="back-link">
+      <Link href="/board" className="back-link">
         <ArrowLeft size={18} />
         Back to board
       </Link>

@@ -30,3 +30,7 @@ Core charges and refund amounts are interpreted as line totals; qty multiplies o
 ## Verification scope
 
 Money tests run locally with Vitest. Database policy and constraint tests run against PostgreSQL (PGlite) with minimal auth/storage fixtures; live Supabase checks verify the migrated schema, seeded counts, RLS, and public read/write behavior. Local Docker is unavailable to this process, so a full `supabase start` reset is not claimed.
+
+## November 5 production workflow revision
+
+The user requested separate technician/admin views, editable team members and demo cleanup. Nelson and Nelly are admins; Alex and Kayenga (Pops) are technicians. Everyone may switch views. No sign-in remains in effect. Removing a team member deactivates them while preserving history, with guards against orphaned open work and removing the last admin. The user confirmed no real work was recorded. Preserve actual vehicle entries and repair descriptions, reset the test completion, remove demo inventory/rates/pay. Parts request/order/receipt commands support the new shop-floor view; full returns and cores are still deferred.

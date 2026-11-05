@@ -1,6 +1,5 @@
-import { SetupWorkspace } from "@/components/setup-workspace";
-import { getSetupData } from "@/lib/setup";
+import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
-export default async function Setup() {
-  return <SetupWorkspace data={await getSetupData()} />;
+export default function Setup() {
+  redirect("/team");
 }

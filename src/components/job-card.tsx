@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { ActionDialog } from "./action-dialog";
+import { PartRequest } from "./parts-workspace";
 import { JobEditor } from "./job-editor";
 import { useActor } from "./shop-shell";
 import { jobAction, payAction, type WorkResult } from "@/app/work-actions";
@@ -26,11 +27,13 @@ export function JobCard({
   data,
   today,
   showVehicle = false,
+  simple = false,
 }: {
   job: WorkJob;
   data: WorkData;
   today: string;
   showVehicle?: boolean;
+  simple?: boolean;
 }) {
   const { actor } = useActor(),
     router = useRouter();
@@ -119,7 +122,7 @@ export function JobCard({
         </span>
       </div>
       {job.notes && <p className="job-note">{job.notes}</p>}
-      {job.is_comeback && (
+      {job.is_comeback && !simple && (
         <div className="comeback-note">
           <RotateCcw size={16} />
           <div>
@@ -134,7 +137,7 @@ export function JobCard({
           </div>
         </div>
       )}
-      {car.blocker && (
+      {car.blocker && !simple && (
         <div className="job-blocker">
           <Flag size={15} />
           {BLOCKER_LABELS[car.blocker]}
@@ -165,7 +168,7 @@ export function JobCard({
                 Done
               </Button>
             )}
-          {job.status !== "cancelled" && (
+          {!simple && job.status !== "cancelled" && (
             <Button
               variant="outline"
               disabled={pending}
@@ -195,7 +198,7 @@ export function JobCard({
               </Button>
             </>
           )}
-          {active && !open && (
+          {!simple && active && !open && (
             <Button
               variant="outline"
               disabled={pending}
@@ -204,7 +207,7 @@ export function JobCard({
               Reopen
             </Button>
           )}
-          {active && job.status !== "cancelled" && (
+          {!simple && active && job.status !== "cancelled" && (
             <button
               className="text-action"
               disabled={pending}
@@ -213,18 +216,21 @@ export function JobCard({
               Cancel job
             </button>
           )}
-          {job.is_comeback && isOwner && job.status !== "cancelled" && (
-            <button
-              className="text-action"
-              disabled={pending}
-              onClick={() => openMode("override")}
-            >
-              Pay override
-            </button>
-          )}
+          {!simple &&
+            job.is_comeback &&
+            isOwner &&
+            job.status !== "cancelled" && (
+              <button
+                className="text-action"
+                disabled={pending}
+                onClick={() => openMode("override")}
+              >
+                Pay override
+              </button>
+            )}
         </div>
       )}
-      {job.status === "done" && active && (
+      {!simple && job.status === "done" && active && (
         <button
           className="text-action"
           disabled={pending}
@@ -262,239 +268,339 @@ export function JobCard({
           onClose={() => setMode(null)}
         />
       )}
-      {mode && !["edit", "comeback"].includes(mode) && (
+      {mode === "need_part" && simple && (
+        <PartRequest
+          data={data}
+          vehicleId={car.id}
+          jobId={job.id}
+          onClose={() => setMode(null)}
+        />
+      )}
+      {mode === "block" && simple && (
         <ActionDialog
-          title={
-            mode === "done"
-              ? "Complete job"
-              : mode === "need_part"
-                ? "Request a part"
-                : mode === "block"
-                  ? "Vehicle blocker"
-                  : mode === "override"
-                    ? "Comeback pay override"
-                    : mode === "cancel"
-                      ? "Cancel this job?"
-                      : "Reopen this job?"
-          }
+          title="What is holding this car up?"
           onClose={() => {
             if (!pending) setMode(null);
           }}
         >
-          <p className="dialog-description">{job.title}</p>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              const values = new FormData(event.currentTarget);
-              if (mode === "done")
-                run(
-                  () =>
-                    command("done", {
-                      completed_date: values.get("completed_date"),
-                      parts: Object.fromEntries(
-                        outstanding.map((p) => [p.id, values.get(p.id)]),
-                      ),
-                    }),
-                  "Job completed. Weekly pay updated.",
-                );
-              else if (mode === "need_part")
-                run(
-                  () => command("need_part", { note: values.get("note") }),
-                  "Part request recorded on the timeline.",
-                );
-              else if (mode === "block")
-                run(
-                  () =>
-                    flagVehicle({
-                      vehicle_id: car.id,
-                      actor_id: actor,
-                      blocker: values.get("blocker"),
-                      note: values.get("note"),
-                    }),
-                  "Vehicle blocker saved.",
-                );
-              else if (mode === "override") {
-                try {
-                  const amount = dollarsToCents(String(values.get("amount")));
+          <div className="blocker-options">
+            {BLOCKERS.filter((b) => b !== "other").map((b) => (
+              <Button
+                key={b}
+                disabled={pending}
+                variant="outline"
+                onClick={() =>
                   run(
                     () =>
-                      payAction({
-                        command: "override",
+                      flagVehicle({
+                        vehicle_id: car.id,
                         actor_id: actor,
-                        job_id: job.id,
-                        revision: job.revision,
-                        expected_override: job.override,
-                        amount_cents: amount,
-                        reason: values.get("reason"),
+                        blocker: b,
+                        note: "",
                       }),
-                    "Comeback pay override recorded.",
-                  );
-                } catch (error) {
-                  setError(
-                    error instanceof Error
-                      ? error.message
-                      : "Check the amount.",
-                  );
+                    "Blocker saved.",
+                  )
                 }
-              } else if (mode === "cancel" || mode === "reopen")
-                run(
-                  () => command(mode),
-                  mode === "cancel" ? "Job cancelled." : "Job reopened.",
-                );
-            }}
-          >
-            <fieldset className="plain-fieldset" disabled={pending}>
-              {mode === "done" && (
-                <>
-                  <label className="field">
-                    Completion date
-                    <input
-                      type="date"
-                      name="completed_date"
-                      required
-                      defaultValue={today}
-                      min={car.purchase_date}
-                      max={today}
-                    />
-                  </label>
-                  <p className="form-hint">
-                    Pay uses this date in Cleveland time. Select an earlier date
-                    only when recording work already completed.
-                  </p>
-                  <h3 className="parts-question">Were all parts used?</h3>
-                  {outstanding.length ? (
-                    outstanding.map((part) => (
-                      <label className="field" key={part.id}>
-                        {part.name} · {part.status}
-                        <select name={part.id} required defaultValue="">
-                          <option value="" disabled>
-                            Select disposition
-                          </option>
-                          {part.status === "received" && (
-                            <option value="used">Used — mark installed</option>
-                          )}
-                          <option value="unused">
-                            Not used — send to returns
-                          </option>
-                        </select>
-                      </label>
-                    ))
-                  ) : (
-                    <p className="notice">
-                      No outstanding parts are linked to this job.
-                    </p>
-                  )}
-                  <p className="form-hint">
-                    Unused linked parts move to the returns queue. Received
-                    parts marked used become installed.
-                  </p>
-                </>
-              )}
-              {mode === "need_part" && (
-                <>
-                  <p className="notice">
-                    Record what is needed. This flags the vehicle as waiting on
-                    parts if it has no blocker, and preserves any existing
-                    blocker.
-                  </p>
-                  <label className="field">
-                    Part needed
-                    <textarea
-                      name="note"
-                      required
-                      maxLength={1000}
-                      placeholder="Name, part number, or what the technician needs"
-                    />
-                  </label>
-                </>
-              )}
-              {mode === "block" && (
-                <>
-                  <label className="field">
-                    Blocker
-                    <select
-                      name="blocker"
-                      defaultValue={car.blocker ?? "waiting_parts"}
-                    >
-                      {BLOCKERS.map((b) => (
-                        <option key={b} value={b}>
-                          {BLOCKER_LABELS[b]}
-                        </option>
-                      ))}
-                      <option value="">Clear blocker</option>
-                    </select>
-                  </label>
-                  <label className="field">
-                    Note <span className="optional">required for Other</span>
-                    <textarea
-                      name="note"
-                      maxLength={1000}
-                      defaultValue={car.blocker_note ?? ""}
-                    />
-                  </label>
-                </>
-              )}
-              {mode === "override" && (
-                <>
-                  <p className="notice">
-                    Owner:{" "}
-                    {data.profiles.find((p) => p.id === actor)?.full_name}{" "}
-                    (self-reported). This is the total labor pay for this
-                    comeback, replacing its default $0.
-                  </p>
-                  <label className="field">
-                    Override pay ($)
-                    <input
-                      name="amount"
-                      required
-                      inputMode="decimal"
-                      type="number"
-                      min="0"
-                      max="10000000"
-                      step="0.01"
-                      defaultValue={(
-                        (override?.amount_cents ?? 0) / 100
-                      ).toFixed(2)}
-                    />
-                  </label>
-                  <label className="field">
-                    Reason
-                    <textarea name="reason" required maxLength={1000} />
-                  </label>
-                </>
-              )}
-              {mode === "cancel" && (
-                <p className="notice">
-                  This removes the job from open work and live pay. Its history
-                  stays available. You can reopen an unlocked job later.
-                </p>
-              )}
-              {mode === "reopen" && (
-                <p className="notice">
-                  This returns the job to Pending and removes its completion
-                  from live pay. Its hours and notes are retained.
-                </p>
-              )}
-            </fieldset>
-            {error && (
-              <p role="alert" className="form-error">
-                {error}
-              </p>
+              >
+                {BLOCKER_LABELS[b]}
+              </Button>
+            ))}
+            {car.blocker && (
+              <Button
+                disabled={pending}
+                onClick={() =>
+                  run(
+                    () =>
+                      flagVehicle({
+                        vehicle_id: car.id,
+                        actor_id: actor,
+                        blocker: "",
+                        note: "",
+                      }),
+                    "Blocker cleared.",
+                  )
+                }
+              >
+                Clear blocker
+              </Button>
             )}
-            <Button type="submit" disabled={pending}>
-              {pending
-                ? "Saving…"
-                : mode === "done"
-                  ? "Complete job"
-                  : mode === "cancel"
-                    ? "Cancel job"
-                    : mode === "reopen"
-                      ? "Reopen job"
-                      : "Save"}
-            </Button>
-          </form>
+          </div>
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
         </ActionDialog>
       )}
+      {mode &&
+        !["edit", "comeback"].includes(mode) &&
+        !(simple && ["need_part", "block"].includes(mode)) && (
+          <ActionDialog
+            title={
+              mode === "done"
+                ? "Complete job"
+                : mode === "need_part"
+                  ? "Request a part"
+                  : mode === "block"
+                    ? "Vehicle blocker"
+                    : mode === "override"
+                      ? "Comeback pay override"
+                      : mode === "cancel"
+                        ? "Cancel this job?"
+                        : "Reopen this job?"
+            }
+            onClose={() => {
+              if (!pending) setMode(null);
+            }}
+          >
+            <p className="dialog-description">{job.title}</p>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const values = new FormData(event.currentTarget);
+                if (mode === "done")
+                  run(
+                    () =>
+                      command("done", {
+                        completed_date: values.get("completed_date"),
+                        parts: Object.fromEntries(
+                          outstanding.map((p) => [p.id, values.get(p.id)]),
+                        ),
+                      }),
+                    "Job completed. Weekly pay updated.",
+                  );
+                else if (mode === "need_part")
+                  run(
+                    () => command("need_part", { note: values.get("note") }),
+                    "Part request recorded on the timeline.",
+                  );
+                else if (mode === "block")
+                  run(
+                    () =>
+                      flagVehicle({
+                        vehicle_id: car.id,
+                        actor_id: actor,
+                        blocker: values.get("blocker"),
+                        note: values.get("note"),
+                      }),
+                    "Vehicle blocker saved.",
+                  );
+                else if (mode === "override") {
+                  try {
+                    const amount = dollarsToCents(String(values.get("amount")));
+                    run(
+                      () =>
+                        payAction({
+                          command: "override",
+                          actor_id: actor,
+                          job_id: job.id,
+                          revision: job.revision,
+                          expected_override: job.override,
+                          amount_cents: amount,
+                          reason: values.get("reason"),
+                        }),
+                      "Comeback pay override recorded.",
+                    );
+                  } catch (error) {
+                    setError(
+                      error instanceof Error
+                        ? error.message
+                        : "Check the amount.",
+                    );
+                  }
+                } else if (mode === "cancel" || mode === "reopen")
+                  run(
+                    () => command(mode),
+                    mode === "cancel" ? "Job cancelled." : "Job reopened.",
+                  );
+              }}
+            >
+              <fieldset className="plain-fieldset" disabled={pending}>
+                {mode === "done" && (
+                  <>
+                    {simple ? (
+                      <input
+                        type="hidden"
+                        name="completed_date"
+                        value={today}
+                      />
+                    ) : (
+                      <label className="field">
+                        Completion date
+                        <input
+                          type="date"
+                          name="completed_date"
+                          required
+                          defaultValue={today}
+                          min={car.purchase_date}
+                          max={today}
+                        />
+                      </label>
+                    )}
+                    {!simple && (
+                      <p className="form-hint">
+                        Pay uses this date in Cleveland time. Select an earlier
+                        date only when recording work already completed.
+                      </p>
+                    )}
+                    {simple &&
+                      outstanding.length > 0 &&
+                      outstanding.every((p) => p.status === "received") && (
+                        <Button
+                          type="button"
+                          onClick={() =>
+                            run(
+                              () =>
+                                command("done", {
+                                  completed_date: today,
+                                  parts: Object.fromEntries(
+                                    outstanding.map((p) => [p.id, "used"]),
+                                  ),
+                                }),
+                              "Job completed.",
+                            )
+                          }
+                        >
+                          All parts used — finish job
+                        </Button>
+                      )}
+                    <h3 className="parts-question">Were all parts used?</h3>
+                    {outstanding.length ? (
+                      outstanding.map((part) => (
+                        <label className="field" key={part.id}>
+                          {part.name} · {part.status}
+                          <select name={part.id} required defaultValue="">
+                            <option value="" disabled>
+                              Select disposition
+                            </option>
+                            {part.status === "received" && (
+                              <option value="used">
+                                Used — mark installed
+                              </option>
+                            )}
+                            <option value="unused">
+                              Not used — send to returns
+                            </option>
+                          </select>
+                        </label>
+                      ))
+                    ) : (
+                      <p className="notice">
+                        No outstanding parts are linked to this job.
+                      </p>
+                    )}
+                    <p className="form-hint">
+                      Unused linked parts move to the returns queue. Received
+                      parts marked used become installed.
+                    </p>
+                  </>
+                )}
+                {mode === "need_part" && (
+                  <>
+                    <p className="notice">
+                      Record what is needed. This flags the vehicle as waiting
+                      on parts if it has no blocker, and preserves any existing
+                      blocker.
+                    </p>
+                    <label className="field">
+                      Part needed
+                      <textarea
+                        name="note"
+                        required
+                        maxLength={1000}
+                        placeholder="Name, part number, or what the technician needs"
+                      />
+                    </label>
+                  </>
+                )}
+                {mode === "block" && (
+                  <>
+                    <label className="field">
+                      Blocker
+                      <select
+                        name="blocker"
+                        defaultValue={car.blocker ?? "waiting_parts"}
+                      >
+                        {BLOCKERS.map((b) => (
+                          <option key={b} value={b}>
+                            {BLOCKER_LABELS[b]}
+                          </option>
+                        ))}
+                        <option value="">Clear blocker</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      Note <span className="optional">required for Other</span>
+                      <textarea
+                        name="note"
+                        maxLength={1000}
+                        defaultValue={car.blocker_note ?? ""}
+                      />
+                    </label>
+                  </>
+                )}
+                {mode === "override" && (
+                  <>
+                    <p className="notice">
+                      Owner:{" "}
+                      {data.profiles.find((p) => p.id === actor)?.full_name}{" "}
+                      (self-reported). This is the total labor pay for this
+                      comeback, replacing its default $0.
+                    </p>
+                    <label className="field">
+                      Override pay ($)
+                      <input
+                        name="amount"
+                        required
+                        inputMode="decimal"
+                        type="number"
+                        min="0"
+                        max="10000000"
+                        step="0.01"
+                        defaultValue={(
+                          (override?.amount_cents ?? 0) / 100
+                        ).toFixed(2)}
+                      />
+                    </label>
+                    <label className="field">
+                      Reason
+                      <textarea name="reason" required maxLength={1000} />
+                    </label>
+                  </>
+                )}
+                {mode === "cancel" && (
+                  <p className="notice">
+                    This removes the job from open work and live pay. Its
+                    history stays available. You can reopen an unlocked job
+                    later.
+                  </p>
+                )}
+                {mode === "reopen" && (
+                  <p className="notice">
+                    This returns the job to Pending and removes its completion
+                    from live pay. Its hours and notes are retained.
+                  </p>
+                )}
+              </fieldset>
+              {error && (
+                <p role="alert" className="form-error">
+                  {error}
+                </p>
+              )}
+              <Button type="submit" disabled={pending}>
+                {pending
+                  ? "Saving…"
+                  : mode === "done"
+                    ? "Complete job"
+                    : mode === "cancel"
+                      ? "Cancel job"
+                      : mode === "reopen"
+                        ? "Reopen job"
+                        : "Save"}
+              </Button>
+            </form>
+          </ActionDialog>
+        )}
     </article>
   );
 }

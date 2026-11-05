@@ -9,11 +9,11 @@ const vehicles = await db.from("vehicles").select("id,stock_number");
 assert.equal(vehicles.error, null);
 assert.equal(
   vehicles.data.filter((v) => v.stock_number.startsWith("DEMO-")).length,
-  12,
+  0,
 );
 const rates = await db.from("tech_pay_rates").select("*");
 assert.equal(rates.error, null);
-assert.ok(rates.data.length >= 6);
+assert.ok(Array.isArray(rates.data));
 const work = await db.rpc("work_data");
 assert.equal(work.error, null);
 assert.ok(Array.isArray(work.data.jobs));
@@ -28,5 +28,5 @@ const denied = await db
 assert.ok(denied.error, "Anonymous UPDATE must fail");
 assert.equal(denied.error.code, "42501");
 console.log(
-  "Live Supabase passed: demo inventory, rate history, jobs, pay report and direct-write denial.",
+  "Live Supabase passed: no demo inventory, rate history, jobs, pay report and direct-write denial.",
 );

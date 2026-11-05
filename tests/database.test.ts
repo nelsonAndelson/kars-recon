@@ -384,44 +384,138 @@ describe("jobs and pay workflows", () => {
       await move(carId, "frontline");
     }));
 });
-describe("paid-record boundaries",()=>{
-  it("blocks locking when an effective rate is missing",async()=>transaction(async()=>{
-    const id=await newPayJob();await completePayJob(id,"2020-01-06");const preview=await report("2020-01-06");
-    expect(preview.rows[0].pay_cents).toBeNull();
-    await expect(payCall("lock",{week_start:"2020-01-06",revision:preview.revision})).rejects.toThrow(/missing pay rates/);
-  }));
-  it("rejects replacement of an existing effective-date rate",async()=>transaction(async()=>{
-    const date=(await db.query<{effective_from:string}>("select effective_from::text from public.tech_pay_rates where tech_id=$1 limit 1",[alex])).rows[0].effective_from;
-    await expect(payCall("rate",{tech_id:alex,effective_from:date,rate_cents:9999})).rejects.toThrow(/already exists/);
-  }));
-  it("prevents raw database edits to locked jobs",async()=>{
-    await db.exec("begin");try{
-      const day=await previousWeek(),id=await newPayJob();await completePayJob(id,day);await payCall("lock",{week_start:day,revision:(await report(day)).revision});
-      await expect(db.query("update public.jobs set book_hours=999 where id=$1",[id])).rejects.toThrow(/locked/);
-    }finally{await db.exec("rollback");}
+describe("paid-record boundaries", () => {
+  it("blocks locking when an effective rate is missing", async () =>
+    transaction(async () => {
+      const id = await newPayJob();
+      await completePayJob(id, "2020-01-06");
+      const preview = await report("2020-01-06");
+      expect(preview.rows[0].pay_cents).toBeNull();
+      await expect(
+        payCall("lock", {
+          week_start: "2020-01-06",
+          revision: preview.revision,
+        }),
+      ).rejects.toThrow(/missing pay rates/);
+    }));
+  it("rejects replacement of an existing effective-date rate", async () =>
+    transaction(async () => {
+      const date = (
+        await db.query<{ effective_from: string }>(
+          "select effective_from::text from public.tech_pay_rates where tech_id=$1 limit 1",
+          [alex],
+        )
+      ).rows[0].effective_from;
+      await expect(
+        payCall("rate", {
+          tech_id: alex,
+          effective_from: date,
+          rate_cents: 9999,
+        }),
+      ).rejects.toThrow(/already exists/);
+    }));
+  it("prevents raw database edits to locked jobs", async () => {
+    await db.exec("begin");
+    try {
+      const day = await previousWeek(),
+        id = await newPayJob();
+      await completePayJob(id, day);
+      await payCall("lock", {
+        week_start: day,
+        revision: (await report(day)).revision,
+      });
+      await expect(
+        db.query("update public.jobs set book_hours=999 where id=$1", [id]),
+      ).rejects.toThrow(/locked/);
+    } finally {
+      await db.exec("rollback");
+    }
   });
-  it("prevents raw unlocking of paid weeks",async()=>{
-    await db.exec("begin");try{
-      const day=await previousWeek(),id=await newPayJob();await completePayJob(id,day);await payCall("lock",{week_start:day,revision:(await report(day)).revision});
-      await expect(db.query("update public.pay_weeks set locked=false,locked_at=null where week_start=$1",[day])).rejects.toThrow(/cannot be changed/);
-    }finally{await db.exec("rollback");}
+  it("prevents raw unlocking of paid weeks", async () => {
+    await db.exec("begin");
+    try {
+      const day = await previousWeek(),
+        id = await newPayJob();
+      await completePayJob(id, day);
+      await payCall("lock", {
+        week_start: day,
+        revision: (await report(day)).revision,
+      });
+      await expect(
+        db.query(
+          "update public.pay_weeks set locked=false,locked_at=null where week_start=$1",
+          [day],
+        ),
+      ).rejects.toThrow(/cannot be changed/);
+    } finally {
+      await db.exec("rollback");
+    }
   });
-  it("rejects a second override based on a stale preview",async()=>transaction(async()=>{
-    const day=await previousWeek(),original=await newPayJob();await completePayJob(original,day);const id=await newPayJob(original),revision=await jobVersion(id);
-    await payCall("override",{job_id:id,revision,expected_override:null,amount_cents:1000,reason:"First"});
-    await expect(payCall("override",{job_id:id,revision,expected_override:null,amount_cents:2000,reason:"Stale"})).rejects.toThrow(/override changed/);
-  }));
-  it("marks a used received part installed in the completion transaction",async()=>transaction(async()=>{
-    const id="30000000-0000-4000-8000-000000000009",part="40000000-0000-4000-8000-000000000009";
-    await jobCall("done",{job_id:id,revision:await jobVersion(id),parts:{[part]:"used"}});
-    const result=(await db.query<{status:string;installed_at:string}>("select status,installed_at from public.parts where id=$1",[part])).rows[0];expect(result.status).toBe("installed");expect(result.installed_at).toBeTruthy();
-  }));
-  it("preserves an existing vehicle blocker when a part is requested",async()=>transaction(async()=>{
-    const id=await newPayJob(),car="50000000-0000-4000-8000-000000000003";
-    await command("blocker",{vehicle_id:car,blocker:"waiting_approval",note:"Owner decision"});
-    await jobCall("need_part",{job_id:id,revision:await jobVersion(id),note:"Brake pads"});
-    expect((await db.query<{blocker:string}>("select blocker from public.vehicles where id=$1",[car])).rows[0].blocker).toBe("waiting_approval");
-  }));
+  it("rejects a second override based on a stale preview", async () =>
+    transaction(async () => {
+      const day = await previousWeek(),
+        original = await newPayJob();
+      await completePayJob(original, day);
+      const id = await newPayJob(original),
+        revision = await jobVersion(id);
+      await payCall("override", {
+        job_id: id,
+        revision,
+        expected_override: null,
+        amount_cents: 1000,
+        reason: "First",
+      });
+      await expect(
+        payCall("override", {
+          job_id: id,
+          revision,
+          expected_override: null,
+          amount_cents: 2000,
+          reason: "Stale",
+        }),
+      ).rejects.toThrow(/override changed/);
+    }));
+  it("marks a used received part installed in the completion transaction", async () =>
+    transaction(async () => {
+      const id = "30000000-0000-4000-8000-000000000009",
+        part = "40000000-0000-4000-8000-000000000009";
+      await jobCall("done", {
+        job_id: id,
+        revision: await jobVersion(id),
+        parts: { [part]: "used" },
+      });
+      const result = (
+        await db.query<{ status: string; installed_at: string }>(
+          "select status,installed_at from public.parts where id=$1",
+          [part],
+        )
+      ).rows[0];
+      expect(result.status).toBe("installed");
+      expect(result.installed_at).toBeTruthy();
+    }));
+  it("preserves an existing vehicle blocker when a part is requested", async () =>
+    transaction(async () => {
+      const id = await newPayJob(),
+        car = "50000000-0000-4000-8000-000000000003";
+      await command("blocker", {
+        vehicle_id: car,
+        blocker: "waiting_approval",
+        note: "Owner decision",
+      });
+      await jobCall("need_part", {
+        job_id: id,
+        revision: await jobVersion(id),
+        note: "Brake pads",
+      });
+      expect(
+        (
+          await db.query<{ blocker: string }>(
+            "select blocker from public.vehicles where id=$1",
+            [car],
+          )
+        ).rows[0].blocker,
+      ).toBe("waiting_approval");
+    }));
 });
 describe("shared vehicle workflows", () => {
   it("creates a vehicle with the configured budget and records attribution", async () =>
@@ -750,5 +844,176 @@ describe("database foundation", () => {
         "update public.parts set vehicle_id='20000000-0000-4000-8000-000000000001' where job_id is not null",
       ),
     ).rejects.toThrow(/foreign key/);
+  });
+});
+
+describe("team management and parts handoffs", () => {
+  const person = "60000000-0000-4000-8000-000000000001";
+  const part = "70000000-0000-4000-8000-000000000001";
+  const member = {
+    id: person,
+    full_name: "Shop technician",
+    role: "tech",
+    active: true,
+  };
+  const team = (payload: object) =>
+    db.query("select public.team_command($1::jsonb)", [
+      JSON.stringify({ actor_id: owner, ...payload }),
+    ]);
+  const parts = (action: string, payload: object) =>
+    db.query("select public.part_command($1,$2::jsonb)", [
+      action,
+      JSON.stringify({ actor_id: owner, ...payload }),
+    ]);
+  it("creates, edits, deactivates and restores a team member without deleting identity", async () => {
+    await transaction(async () => {
+      await team({ ...member, expected: null });
+      await team({
+        ...member,
+        full_name: "Renamed technician",
+        active: false,
+        expected: member,
+      });
+      await team({
+        ...member,
+        expected: { ...member, full_name: "Renamed technician", active: false },
+      });
+      const rows = await db.query<{ full_name: string }>(
+        "select full_name from public.profiles where id=$1",
+        [person],
+      );
+      expect(rows.rows[0].full_name).toBe(member.full_name);
+    });
+  });
+  it("rejects team changes by a selected technician", async () => {
+    await transaction(async () => {
+      await expect(
+        team({ ...member, expected: null, actor_id: alex }),
+      ).rejects.toThrow(/admin/);
+    });
+  });
+  it("keeps the last active admin", async () => {
+    await transaction(async () => {
+      const p = (
+        await db.query<Record<string, unknown>>(
+          "select * from public.profiles where id=$1",
+          [owner],
+        )
+      ).rows[0];
+      await expect(team({ ...p, active: false, expected: p })).rejects.toThrow(
+        /at least one/,
+      );
+    });
+  });
+  it("requires reassignment before removing a technician with open jobs", async () => {
+    await transaction(async () => {
+      const p = (
+        await db.query<Record<string, unknown>>(
+          "select * from public.profiles where id=$1",
+          [alex],
+        )
+      ).rows[0];
+      await expect(team({ ...p, active: false, expected: p })).rejects.toThrow(
+        /Reassign/,
+      );
+    });
+  });
+  it("rejects stale team edits", async () => {
+    await transaction(async () => {
+      await team({ ...member, expected: null });
+      await expect(
+        team({
+          ...member,
+          full_name: "New",
+          expected: { ...member, full_name: "Stale" },
+        }),
+      ).rejects.toThrow(/changed/);
+    });
+  });
+  it("records request, order and receipt with exact cents and audit attribution", async () => {
+    await transaction(async () => {
+      await parts("request", {
+        id: part,
+        vehicle_id: firstCar,
+        job_id: "",
+        name: "Brake rotors",
+        qty: 2,
+      });
+      let p = (
+        await db.query<{ item: object }>(
+          "select to_jsonb(p) item from public.parts p where id=$1",
+          [part],
+        )
+      ).rows[0].item;
+      await parts("order", {
+        id: part,
+        expected: p,
+        vendor: "Test vendor",
+        unit_cost_cents: 1234,
+      });
+      p = (
+        await db.query<{ item: object }>(
+          "select to_jsonb(p) item from public.parts p where id=$1",
+          [part],
+        )
+      ).rows[0].item;
+      await parts("receive", { id: part, expected: p });
+      const saved = (
+        await db.query<{
+          status: string;
+          unit_cost_cents: number;
+          received_at: string;
+        }>("select * from public.parts where id=$1", [part])
+      ).rows[0];
+      expect(saved.status).toBe("received");
+      expect(saved.unit_cost_cents).toBe(1234);
+      expect(saved.received_at).toBeTruthy();
+      const audit = (
+        await db.query<{ who: string }>(
+          "select who from public.activity_log where what::text like '%part_receive%' and vehicle_id=$1",
+          [firstCar],
+        )
+      ).rows;
+      expect(audit.some((a) => a.who === owner)).toBe(true);
+    });
+  });
+  it("cannot receive a part before ordering it", async () => {
+    await transaction(async () => {
+      await parts("request", {
+        id: part,
+        vehicle_id: firstCar,
+        job_id: "",
+        name: "Rotor",
+        qty: 1,
+      });
+      const p = (
+        await db.query<{ item: object }>(
+          "select to_jsonb(p) item from public.parts p where id=$1",
+          [part],
+        )
+      ).rows[0].item;
+      await expect(parts("receive", { id: part, expected: p })).rejects.toThrow(
+        /Only ordered/,
+      );
+    });
+  });
+  it("rejects a stale parts transition", async () => {
+    await transaction(async () => {
+      await parts("request", {
+        id: part,
+        vehicle_id: firstCar,
+        job_id: "",
+        name: "Rotor",
+        qty: 1,
+      });
+      await expect(
+        parts("order", {
+          id: part,
+          expected: {},
+          vendor: "Test",
+          unit_cost_cents: 1,
+        }),
+      ).rejects.toThrow(/changed/);
+    });
   });
 });

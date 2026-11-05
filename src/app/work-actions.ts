@@ -28,7 +28,7 @@ function failed(error: unknown): WorkResult {
   };
 }
 function refresh() {
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   revalidatePath("/jobs");
   revalidatePath("/pay");
   revalidatePath("/pay/rates");

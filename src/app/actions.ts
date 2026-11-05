@@ -45,7 +45,7 @@ async function run(command: string, payload: Json): Promise<Result> {
       payload,
     });
     if (error) throw error;
-    revalidatePath("/");
+    revalidatePath("/", "layout");
     revalidatePath(`/vehicles/${data}`);
     revalidatePath(`/vehicles/${data}/check-in`);
     return { ok: true, id: data };

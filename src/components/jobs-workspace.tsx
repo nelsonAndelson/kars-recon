@@ -14,7 +14,7 @@ export function JobsWorkspace({
   today: string;
 }) {
   const { actor } = useActor();
-  const [tech, setTech] = useState("mine"),
+  const [tech, setTech] = useState(""),
     [status, setStatus] = useState("open"),
     [search, setSearch] = useState(""),
     [create, setCreate] = useState(false);
@@ -46,7 +46,7 @@ export function JobsWorkspace({
         <div>
           <div className="eyebrow">THE WORK IN FRONT OF YOU</div>
           <h1>
-            My jobs<span className="title-dot">.</span>
+            Jobs & hours<span className="title-dot">.</span>
           </h1>
           <p>Book hours, clear handoffs, and every repair accounted for.</p>
         </div>

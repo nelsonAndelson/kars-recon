@@ -17,6 +17,9 @@ declare
   part_states public.part_status[] := array['needed','ordered','received','installed','return_pending','returned']::public.part_status[];
   purchased timestamptz;
 begin
+  if exists(select 1 from public.vehicles where stock_number not like 'DEMO-%' and stock_number not like 'TEST-%') then
+    raise exception 'Refusing demo seed: this database contains shop inventory';
+  end if;
   if exists(select 1 from public.vehicles where stock_number = 'DEMO-1001') then
     raise notice 'Demo data already exists; seed skipped.';
     return;
