@@ -17,7 +17,7 @@ Nelson and Nelly are admins. Alex and Kayenga (Pops) are technicians. These name
 
 The 12 demo vehicles and two verification vehicles, their dependent records, demo rates and test pay weeks were removed. The actual F-150 (D27772) and Honda Pilot (000006), check-ins and repair descriptions were preserved. The owner confirmed no real work had been recorded, so the F-150's test completion was reset to pending with zero book hours for admin review. Real pay rates have not been invented or set.
 
-The cleanup was a guarded one-off transaction after a local snapshot, not a reusable destructive migration. All immutable-history triggers were re-enabled and checked. A single unlinked synthetic check-in image remains in private storage; the app cannot read it after its test vehicle was removed. Removing that orphan requires Storage admin access.
+The cleanup was a guarded one-off transaction after a local snapshot, not a reusable destructive migration. All immutable-history triggers were re-enabled and checked. The final synthetic check-in photo was permanently removed through the Storage dashboard after explicit confirmation. Storage verification found only an empty-folder placeholder; no photos remain.
 
 ## Access and data
 
@@ -69,6 +69,8 @@ git push origin main
 If that repository exists, connect this checkout to the intended repository instead of overwriting it. Never commit passwords or service-role keys.
 
 ## Verification and remaining scope
+
+Production deployment dpl_JCmRPAtAWZJr6TvXXhnPjtBnLCeG is READY, serving source commit 55cb54e95dd18ef44d2e94157d4394350e42bd81. Live admin, technician, team, parts, board and pay routes were checked. Phone layout, view switching, team editing and the unassigned-job guard were verified. Type checking and the production build passed.
 
 98 tests cover money arithmetic, migration constraints, shared access, stale edits, jobs, QC, immutable pay, team changes, last-admin protection, open-job reassignment guards, and parts request/order/receipt transitions. PostgreSQL tests use PGlite with minimal Auth/Storage fixtures; a full Docker reset is not claimed.
 
