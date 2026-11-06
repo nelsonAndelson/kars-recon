@@ -34,3 +34,7 @@ Money tests run locally with Vitest. Database policy and constraint tests run ag
 ## November 5 production workflow revision
 
 The user requested separate technician/admin views, editable team members and demo cleanup. Nelson and Nelly are admins; Alex and Kayenga (Pops) are technicians. Everyone may switch views. No sign-in remains in effect. Removing a team member deactivates them while preserving history, with guards against orphaned open work and removing the last admin. The user confirmed no real work was recorded. Preserve actual vehicle entries and repair descriptions, reset the test completion, remove demo inventory/rates/pay. Parts request/order/receipt commands support the new shop-floor view; full returns and cores are still deferred.
+
+## November 6, 2026 — Inventory integration
+
+Approved daily plus manual fetching, review-first additions, VIN-suffix stock suggestions, actual purchase dates, review of existing-car differences and dedicated import tables. Existing recon columns remain unchanged. Explicit FTPS uses the certificate-valid canonical hostname server122.web-hosting.com after confirming it resolves to the same address as feed.karsautollc.com. All source files are read only. No inventory is automatically marked sold or added to recon. First fetch and scheduled-handler verification are complete; first automatic timer execution remains pending the next 11:00 UTC schedule.

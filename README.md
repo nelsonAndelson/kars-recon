@@ -11,6 +11,22 @@ Live app: https://kars-recon.vercel.app
 - **Weekly pay** (/pay): set real effective rates, review completed book hours, export CSV, and lock paid weeks after Sunday ends. Locked amounts never recalculate. Locking records payment; it does not send money.
 - Everyone can switch views without changing their role. The last view and selected name are remembered on the device.
 
+## DealerCenter inventory import — November 6, 2026
+
+Open /inventory from the admin navigation. Select an active admin, use Sync now, then Review new car. The suggested stock number is the final six VIN characters; enter the actual purchase date and select a recon stage. Frontline still requires QC sign-off after import. New cars and changes are never applied by a fetch alone.
+
+The importer retrieves the newest DealerCenter_YYYYMMDD_28126551.csv file. The account-relative FTP folder is /. feed.karsautollc.com and server122.web-hosting.com resolve to the same server; the FTP certificate covers the latter, so production uses server122.web-hosting.com on port 21 with Explicit FTPS and full certificate validation. No plaintext fallback or certificate bypass is enabled. Existing export files are read only.
+
+The source provides no stock number, purchase date or sold status. Full VIN matches drive review. Duplicate VINs are conflicts; blank source values cannot erase details. Advertised mileage and inventory photos are references, separate from check-in evidence. Jobs, parts, pay, stages and blockers are preserved. Missing listings are flagged, never deleted or automatically sold. An unchanged dismissed entry stays dismissed. Photos are linked from DealerCenter, not copied into check-in storage.
+
+The original eleven recon tables and columns remain unchanged. Two RLS-protected public tables hold import runs and items. A private deny-by-default table stores only a hash of a dedicated server worker token. Direct anonymous writes are denied. The shared no-sign-in identity model still applies to admin review. Server secrets are provisioned only in production; .env.example lists names without values.
+
+Daily fetching is configured through vercel.json at 11:00 UTC (6 a.m. EST / 7 a.m. EDT). The scheduled endpoint validates CRON_SECRET. The worker token only authorizes import queue commands; it is not a Supabase service-role key. Concurrent syncs are blocked, abandoned runs expire after five minutes, manual retries have a one-minute cooldown, and failed downloads preserve the prior review list. Empty, malformed, unstable and oversized files are rejected. Stale feeds and large inventory drops suppress missing-listing conclusions.
+
+Production deployment dpl_ZSEX1KfMFrjtd2jXsng8nVgV5jcD is READY at https://kars-recon.vercel.app, serving source commit 6e2f04a070cea5ad98980dddc3f45dce1996a46a. Manual sync and a manually invoked authenticated scheduled endpoint each successfully fetched seven rows from DealerCenter_20261105_28126551.csv. All seven remain pending; zero vehicles were approved. The two existing recon vehicles, their jobs, parts and pay records were checked unchanged. The first timer-driven run is due November 7, 2026, at approximately 6 a.m. Eastern and was not yet observed at release time.
+
+126 tests pass. Type checking and both Vercel production builds passed. Windows local builds compiled and type-checked but hit an EPERM error writing generated _not-found files; the successful cloud builds provide production build verification. Live checks covered the review form, phone layout without horizontal overflow, technician-disabled controls, unauthorized cron rejection (401), technician sync rejection, and no recorded runtime errors. Approval mutations were tested in the disposable PGlite database; production cars remain for the owner to review.
+
 ## Production cleanup — November 5, 2026
 
 Nelson and Nelly are admins. Alex and Kayenga (Pops) are technicians. These names and roles are editable.
@@ -23,7 +39,7 @@ The cleanup was a guarded one-off transaction after a local snapshot, not a reus
 
 This is the explicitly approved shared, no-sign-in app. Selected names are self-reported. Views and roles organize workflows, not authenticated access. Everyone using the app can view costs and pay. The application uses only the Supabase publishable key; no service-role key is embedded.
 
-The original eleven tables and columns are retained. Validated commands handle writes; direct anonymous table writes are denied. QC sign-offs, comeback overrides and frozen pay snapshots use activity_log as approved. Team members retain the original auth.users foreign key through banned, passwordless records; the app does not create usable logins.
+The original eleven tables and columns are retained; the inventory integration adds separate supporting tables described above. Validated commands handle writes; direct anonymous table writes are denied. QC sign-offs, comeback overrides and frozen pay snapshots use activity_log as approved. Team members retain the original auth.users foreign key through banned, passwordless records; the app does not create usable logins.
 
 Supabase project: jnrmevlbqshnjsyymtod, organization nelsonbaguma, Ohio.
 Vercel project: kars-recon (prj_fEWoRYRnuP6IaTOSPUNgCfD0pBkz), team nelsonandelsons-projects.
