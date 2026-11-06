@@ -92,6 +92,115 @@ export type Database = {
           },
         ];
       };
+      inventory_import_items: {
+        Row: {
+          decision: string;
+          expected_vehicle: Json | null;
+          fingerprint: string;
+          id: string;
+          kind: string;
+          note: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          row_data: Json;
+          run_id: string;
+          vehicle_id: string | null;
+        };
+        Insert: {
+          decision?: string;
+          expected_vehicle?: Json | null;
+          fingerprint: string;
+          id?: string;
+          kind: string;
+          note?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          row_data: Json;
+          run_id: string;
+          vehicle_id?: string | null;
+        };
+        Update: {
+          decision?: string;
+          expected_vehicle?: Json | null;
+          fingerprint?: string;
+          id?: string;
+          kind?: string;
+          note?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          row_data?: Json;
+          run_id?: string;
+          vehicle_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inventory_import_items_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "inventory_import_items_run_id_fkey";
+            columns: ["run_id"];
+            isOneToOne: false;
+            referencedRelation: "inventory_import_runs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "inventory_import_items_vehicle_id_fkey";
+            columns: ["vehicle_id"];
+            isOneToOne: false;
+            referencedRelation: "vehicles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      inventory_import_runs: {
+        Row: {
+          error: string | null;
+          file_date: string | null;
+          file_hash: string | null;
+          filename: string | null;
+          finished_at: string | null;
+          fresh: boolean;
+          id: string;
+          missing_safe: boolean;
+          row_count: number;
+          started_at: string;
+          status: string;
+          trigger: string;
+        };
+        Insert: {
+          error?: string | null;
+          file_date?: string | null;
+          file_hash?: string | null;
+          filename?: string | null;
+          finished_at?: string | null;
+          fresh?: boolean;
+          id?: string;
+          missing_safe?: boolean;
+          row_count?: number;
+          started_at?: string;
+          status: string;
+          trigger: string;
+        };
+        Update: {
+          error?: string | null;
+          file_date?: string | null;
+          file_hash?: string | null;
+          filename?: string | null;
+          finished_at?: string | null;
+          fresh?: boolean;
+          id?: string;
+          missing_safe?: boolean;
+          row_count?: number;
+          started_at?: string;
+          status?: string;
+          trigger?: string;
+        };
+        Relationships: [];
+      };
       jobs: {
         Row: {
           book_hours: number;
@@ -515,6 +624,12 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      inventory_read: { Args: never; Returns: Json };
+      inventory_review: { Args: { payload: Json }; Returns: string };
+      inventory_worker: {
+        Args: { command: string; payload: Json; token: string };
+        Returns: Json;
+      };
       job_command: {
         Args: { command: string; payload: Json };
         Returns: string;

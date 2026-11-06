@@ -764,11 +764,11 @@ describe("database foundation", () => {
       comebacks: 2,
     });
   });
-  it("enables RLS on all eleven public tables", async () => {
+  it("enables RLS on recon and import tables", async () => {
     const { rows } = await db.query<{ total: number; protected: number }>(
       `select count(*)::int total,count(*) filter(where c.relrowsecurity)::int protected from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'`,
     );
-    expect(rows[0]).toEqual({ total: 11, protected: 11 });
+    expect(rows[0]).toEqual({ total: 13, protected: 13 });
   });
   it("permits shared reads and denies anonymous writes", async () => {
     await db.exec("set role anon");
@@ -1016,4 +1016,261 @@ describe("team management and parts handoffs", () => {
       ).rejects.toThrow(/changed/);
     });
   });
+});
+
+describe("inventory import", () => {
+  const token = "test-only-worker-token-not-a-production-secret";
+  const feed = {
+    vin: "1FTFW1EF5EKF48812",
+    year: 2014,
+    make: "Ford",
+    model: "F150",
+    trim: "STX",
+    color: "Blue",
+    advertised_mileage: 162024,
+    photos: [],
+  };
+  async function worker(action: string, payload: object = {}, secret = token) {
+    return (
+      await db.query<{ result: any }>(
+        "select public.inventory_worker($1,$2::jsonb,$3) result",
+        [action, JSON.stringify(payload), secret],
+      )
+    ).rows[0].result;
+  }
+  async function read() {
+    return (
+      await db.query<{ result: any }>("select public.inventory_read() result")
+    ).rows[0].result;
+  }
+  async function review(item: any, extra: object = {}) {
+    return db.query("select public.inventory_review($1::jsonb)", [
+      JSON.stringify({
+        actor_id: owner,
+        item_id: item.id,
+        fingerprint: item.fingerprint,
+        decision: "approve",
+        stock_number: "F48812",
+        purchase_date: "2026-01-01",
+        source: "other",
+        stage: "check_in",
+        ...extra,
+      }),
+    ]);
+  }
+  async function scope(run: () => Promise<void>) {
+    await db.exec("begin");
+    try {
+      await db.query(
+        "insert into private.inventory_access(token_hash) values(encode(sha256(convert_to($1,'UTF8')),'hex'))",
+        [token],
+      );
+      await db.exec("set local role anon");
+      await run();
+    } finally {
+      await db.exec("rollback");
+    }
+  }
+  async function finish(rows: object[] = [feed], extra: object = {}) {
+    const { id } = await worker("begin", { trigger: "manual" });
+    const date = new Date().toISOString().slice(0, 10);
+    await worker("finish", {
+      run_id: id,
+      filename: `DealerCenter_${date.replaceAll("-", "")}_28126551.csv`,
+      file_date: date,
+      file_hash: "a".repeat(64),
+      modified_at: new Date().toISOString(),
+      rows,
+      ...extra,
+    });
+    return (await read()).items[0];
+  }
+  async function ageRuns() {
+    await db.exec(
+      "reset role; update public.inventory_import_runs set started_at=started_at-interval '2 minutes'; set local role anon",
+    );
+  }
+  it("queues without touching vehicles or jobs, then approves one car", async () =>
+    scope(async () => {
+      const before = await db.query(
+          "select * from public.vehicles order by id",
+        ),
+        jobs = await db.query("select * from public.jobs order by id");
+      const item = await finish();
+      expect(item.kind).toBe("new");
+      expect(
+        (await db.query("select * from public.vehicles order by id")).rows,
+      ).toEqual(before.rows);
+      await review(item);
+      const car = (
+        await db.query<any>("select * from public.vehicles where vin=$1", [
+          feed.vin,
+        ])
+      ).rows[0];
+      expect(car.stock_number).toBe("F48812");
+      expect(car.miles_in).toBeNull();
+      expect(car.stage).toBe("check_in");
+      expect(
+        (await db.query("select * from public.jobs order by id")).rows,
+      ).toEqual(jobs.rows);
+    }));
+  it("rejects an unauthorized worker", async () =>
+    scope(async () => {
+      await expect(
+        worker("begin", { trigger: "scheduled" }, "invalid"),
+      ).rejects.toThrow(/authorized/);
+    }));
+  it("denies direct anonymous import writes", async () =>
+    scope(async () => {
+      await expect(
+        db.exec(
+          "insert into public.inventory_import_runs(status,trigger) values('fetching','manual')",
+        ),
+      ).rejects.toThrow();
+    }));
+  it("prevents overlapping syncs", async () =>
+    scope(async () => {
+      await worker("begin", { trigger: "manual" });
+      await expect(worker("begin", { trigger: "scheduled" })).rejects.toThrow(
+        /already running/,
+      );
+    }));
+  it("expires abandoned fetches", async () =>
+    scope(async () => {
+      await worker("begin", { trigger: "manual" });
+      await db.exec(
+        "reset role; update public.inventory_import_runs set started_at=now()-interval '6 minutes'; set local role anon",
+      );
+      await worker("begin", { trigger: "manual" });
+      expect((await read()).runs.some((r: any) => r.status === "failed")).toBe(
+        true,
+      );
+    }));
+  it("blocks duplicate VIN rows from approval", async () =>
+    scope(async () => {
+      const item = await finish([feed, feed]);
+      expect(item.kind).toBe("conflict");
+      await expect(review(item)).rejects.toThrow(/conflicts/);
+    }));
+  it("rejects stock collisions", async () =>
+    scope(async () => {
+      const item = await finish();
+      const stock = (
+        await db.query<any>("select stock_number from public.vehicles limit 1")
+      ).rows[0].stock_number;
+      await expect(review(item, { stock_number: stock })).rejects.toThrow(
+        /unique/,
+      );
+    }));
+  it("requires an actual purchase date", async () =>
+    scope(async () => {
+      const item = await finish();
+      await expect(review(item, { purchase_date: "" })).rejects.toThrow(
+        /actual purchase/,
+      );
+    }));
+  it("requires an active admin", async () =>
+    scope(async () => {
+      const item = await finish();
+      await expect(review(item, { actor_id: alex })).rejects.toThrow(
+        /active admin/,
+      );
+    }));
+  it("does not bypass Frontline QC", async () =>
+    scope(async () => {
+      const item = await finish();
+      await expect(review(item, { stage: "frontline" })).rejects.toThrow(/QC/);
+    }));
+  it("carries dismissal across unchanged exports", async () =>
+    scope(async () => {
+      const item = await finish();
+      await review(item, { decision: "dismiss" });
+      await ageRuns();
+      const again = await finish();
+      expect(again.decision).toBe("dismissed");
+    }));
+  it("does not duplicate an approved vehicle on retry", async () =>
+    scope(async () => {
+      const item = await finish();
+      await review(item);
+      await ageRuns();
+      const again = await finish();
+      expect(again.vehicle_id).toBeTruthy();
+      expect(again.decision).toBe("approved");
+      expect(
+        (
+          await db.query("select * from public.vehicles where vin=$1", [
+            feed.vin,
+          ])
+        ).rows,
+      ).toHaveLength(1);
+    }));
+  it("rejects approval from a superseded export", async () =>
+    scope(async () => {
+      const item = await finish();
+      await ageRuns();
+      await finish();
+      await expect(review(item)).rejects.toThrow(/changed/);
+    }));
+  it("preserves missing vehicles and suppresses missing detection for stale feeds", async () =>
+    scope(async () => {
+      const before = (await db.query("select * from public.vehicles")).rows
+        .length;
+      await finish([feed], {
+        file_date: "2020-01-01",
+        modified_at: "2020-01-01T00:00:00Z",
+      });
+      expect((await read()).missing).toHaveLength(0);
+      expect(
+        (await db.query("select * from public.vehicles")).rows,
+      ).toHaveLength(before);
+    }));
+  it("retains last successful review queue after failure", async () =>
+    scope(async () => {
+      const item = await finish();
+      await ageRuns();
+      const { id } = await worker("begin", { trigger: "manual" });
+      await worker("fail", { run_id: id, error: "Download failed" });
+      expect((await read()).items[0].id).toBe(item.id);
+    }));
+  it("only applies selected identity changes and preserves check-in mileage", async () =>
+    scope(async () => {
+      const first = await finish();
+      await review(first);
+      await ageRuns();
+      const item = await finish([
+        { ...feed, make: "FORD", color: "Red", advertised_mileage: 200000 },
+      ]);
+      const car = (await read()).vehicles.find(
+        (v: any) => v.id === item.vehicle_id,
+      );
+      await review(item, { fields: ["make"], expected_vehicle: car });
+      const saved = (await read()).vehicles.find(
+        (v: any) => v.id === item.vehicle_id,
+      );
+      expect(saved).toEqual({ ...car, make: "FORD" });
+    }));
+  it("rejects stale vehicle snapshots", async () =>
+    scope(async () => {
+      const first = await finish();
+      await review(first);
+      await ageRuns();
+      const item = await finish([{ ...feed, make: "FORD" }]);
+      await expect(
+        review(item, { fields: ["make"], expected_vehicle: {} }),
+      ).rejects.toThrow(/Vehicle changed/);
+    }));
+  it("rejects importing payroll or stage fields", async () =>
+    scope(async () => {
+      const first = await finish();
+      await review(first);
+      await ageRuns();
+      const item = await finish([{ ...feed, make: "FORD" }]);
+      const car = (await read()).vehicles.find(
+        (v: any) => v.id === item.vehicle_id,
+      );
+      await expect(
+        review(item, { fields: ["stage"], expected_vehicle: car }),
+      ).rejects.toThrow(/cannot be imported/);
+    }));
 });

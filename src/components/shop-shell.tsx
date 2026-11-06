@@ -27,7 +27,15 @@ export function ShopShell({
   profiles: Tables<"profiles">[];
   title: string;
   active?:
-    "board" | "new" | "jobs" | "pay" | "admin" | "tech" | "team" | "parts";
+    | "board"
+    | "new"
+    | "jobs"
+    | "pay"
+    | "admin"
+    | "tech"
+    | "team"
+    | "parts"
+    | "inventory";
 }) {
   const [actor, setActorState] = useState("");
   const technician = active === "tech";
@@ -54,6 +62,12 @@ export function ShopShell({
     { href: "/parts", label: "Parts", id: "parts", Icon: Package },
     { href: "/pay", label: "Weekly pay", id: "pay", Icon: Banknote },
     { href: "/team", label: "Team", id: "team", Icon: Users },
+    {
+      href: "/inventory",
+      label: "Inventory import",
+      id: "inventory",
+      Icon: CarFront,
+    },
   ];
   return (
     <ActorContext.Provider value={{ actor, setActor }}>

@@ -3,6 +3,7 @@ import "./globals.css";
 import "./recon.css";
 import "./work.css";
 import "./shop.css";
+import "./inventory.css";
 export const metadata: Metadata = {
   title: "Kars Recon · Shop workspace",
   description:
